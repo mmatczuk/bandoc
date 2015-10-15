@@ -6,7 +6,8 @@ __author__ = 'mmatczuk'
 
 
 class Parser(object):
-    def __init__(self, book):
+    def __init__(self, book, limit=20):
+        self.__limit = limit
         self.__book = book
         self.__header_map = None
         self.__samples = []
@@ -17,11 +18,17 @@ class Parser(object):
     def parse(self):
         self._read_header()
 
-        first = True
+        start = None
+        header = True
         for _, cells in self.__book[1].rows().iteritems():
-            if first:
-                first = not first
+            if header:
+                header = not header
                 continue
+
+            if start is None:
+                start = self._get_value(cells[0].value)
+            elif start + self.__limit < self._get_value(cells[0].value):
+                break
 
             s = Sample()
             for cell in cells:
@@ -41,7 +48,7 @@ class Parser(object):
     def _read_header(self):
         self.__header_map = {
             self._get_col_name(cell.id): self._get_header_cords(cell.value) for cell in self.__book[1][1]
-            }
+        }
 
     @staticmethod
     def _get_col_name(cell_id):
